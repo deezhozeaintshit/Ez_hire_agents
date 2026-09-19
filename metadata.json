@@ -1,0 +1,6 @@
+{
+  "name": "hireEZ EZ Agent",
+  "description": "Pixel-perfect replica of the hireEZ EZ Agent landing page featuring autonomous AI recruiting agents, interactive command center, live pipeline simulation, 7-step workflow deep-dive, and hiring intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
