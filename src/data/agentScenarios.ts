@@ -43,6 +43,52 @@ export interface ScenarioDefinition {
   };
 }
 
+export type AgentPersonalityMode = 'precision' | 'executive' | 'energetic';
+
+export interface PersonalityConfig {
+  id: AgentPersonalityMode;
+  name: string;
+  tagline: string;
+  description: string;
+  tone: string;
+  greeting: string;
+  avatarIcon: string;
+  accentBadge: string;
+}
+
+export const AGENT_PERSONALITIES: Record<AgentPersonalityMode, PersonalityConfig> = {
+  precision: {
+    id: 'precision',
+    name: 'Precision Algorithmic',
+    tagline: 'Deterministic & ICP-Hardened',
+    description: 'Ultra-objective, metric-driven recruiting engine prioritizing quota verification, tenure stats, and zero fluff.',
+    tone: 'Analytical, concise, statistical',
+    greeting: 'Parameters locked. Synthesizing ICP match score matrices and cross-platform verified credentials.',
+    avatarIcon: '🎯',
+    accentBadge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+  },
+  executive: {
+    id: 'executive',
+    name: 'Executive Advisor',
+    tagline: 'Strategic & High-Touch Concierge',
+    description: 'Tailored for senior leadership, board appointments, and white-glove candidate experience.',
+    tone: 'Sophisticated, consultative, strategic',
+    greeting: 'Good day. I am orchestrating discrete market outreach for senior leadership caliber talent.',
+    avatarIcon: '👔',
+    accentBadge: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
+  },
+  energetic: {
+    id: 'energetic',
+    name: 'Hyper-Growth Sourcer',
+    tagline: 'Velocity & Inbound Magnet',
+    description: 'Optimized for high-volume sprints, rapid candidate conversion, and dynamic personalized storytelling.',
+    tone: 'Vibrant, fast-paced, high-momentum',
+    greeting: 'Pipeline primed! Launching multi-thread sourcing sprints across 45+ platforms right now.',
+    avatarIcon: '⚡',
+    accentBadge: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400'
+  }
+};
+
 export const PREDEFINED_SCENARIOS: ScenarioDefinition[] = [
   {
     id: 'sales-manager',

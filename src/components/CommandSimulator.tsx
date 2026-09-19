@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Bot,
@@ -19,35 +19,122 @@ import {
   UserCheck,
   TrendingUp,
   Clock,
-  Sparkle
+  Sparkle,
+  Sliders,
+  Keyboard,
+  Mic,
+  MessageSquare,
+  Award
 } from 'lucide-react';
 import {
   PREDEFINED_SCENARIOS,
   findMatchingScenario,
   ScenarioDefinition,
-  CandidateDemo
+  CandidateDemo,
+  AGENT_PERSONALITIES,
+  AgentPersonalityMode
 } from '../data/agentScenarios';
 
 interface CommandSimulatorProps {
   onOpenContact: () => void;
   onOpenRegister: () => void;
+  onOpenShortcuts?: () => void;
 }
 
 export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
   onOpenContact,
-  onOpenRegister
+  onOpenRegister,
+  onOpenShortcuts
 }) => {
   const [activeChipIndex, setActiveChipIndex] = useState(0);
   const [inputVal, setInputVal] = useState('');
   const [activeScenario, setActiveScenario] = useState<ScenarioDefinition>(PREDEFINED_SCENARIOS[0]);
   const [simulating, setSimulating] = useState(false);
-  const [simulationStep, setSimulationStep] = useState(0);
   const [simulatedLogs, setSimulatedLogs] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'stream' | 'ats' | 'logs' | 'transcript'>('stream');
+  const [activeTab, setActiveTab] = useState<'stream' | 'ats' | 'logs' | 'personality'>('stream');
   const [approvedCandidates, setApprovedCandidates] = useState<string[]>(['c-vr']);
-  const [selectedCandidate, setSelectedCandidate] = useState<CandidateDemo | null>(null);
+  const [personalityMode, setPersonalityMode] = useState<AgentPersonalityMode>('precision');
+  const [personalityToast, setPersonalityToast] = useState<string | null>(null);
 
-  // Auto rotate the chip highlight every 4 seconds if user is idle
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const currentPersonality = AGENT_PERSONALITIES[personalityMode];
+
+  // Global Keyboard shortcuts listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing inside an input/textarea unless it's Escape or ⌘K
+      const isInputActive =
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        document.activeElement?.tagName === 'SELECT';
+
+      // ⌘K or Ctrl+K: Focus Command input
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        return;
+      }
+
+      // Escape: blur input or clear
+      if (e.key === 'Escape') {
+        if (inputRef.current && inputRef.current === document.activeElement) {
+          inputRef.current.blur();
+        }
+        return;
+      }
+
+      // If user is inside an input, don't trigger single key shortcuts
+      if (isInputActive) return;
+
+      // Single Key '1' - '4': Switch Scenario
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        e.preventDefault();
+        const index = parseInt(e.key, 10) - 1;
+        if (PREDEFINED_SCENARIOS[index]) {
+          const sc = PREDEFINED_SCENARIOS[index];
+          setActiveChipIndex(index);
+          setInputVal(sc.prompt);
+          runSimulation(sc.prompt);
+        }
+        return;
+      }
+
+      // 'P' or 'p': Cycle Agent Personality
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        const modes: AgentPersonalityMode[] = ['precision', 'executive', 'energetic'];
+        const nextIdx = (modes.indexOf(personalityMode) + 1) % modes.length;
+        const nextMode = modes[nextIdx];
+        setPersonalityMode(nextMode);
+        setPersonalityToast(`Agent Persona changed to: ${AGENT_PERSONALITIES[nextMode].name}`);
+        setTimeout(() => setPersonalityToast(null), 2500);
+        return;
+      }
+
+      // 'T' or 't': Cycle Tabs
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        const tabs: Array<'stream' | 'ats' | 'logs' | 'personality'> = ['stream', 'ats', 'logs', 'personality'];
+        const nextTabIdx = (tabs.indexOf(activeTab) + 1) % tabs.length;
+        setActiveTab(tabs[nextTabIdx]);
+        return;
+      }
+
+      // '?' or '/': Open shortcuts help modal
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        onOpenShortcuts?.();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [personalityMode, activeTab, onOpenShortcuts]);
+
+  // Auto rotate the chip highlight every 4.5 seconds if user is idle
   useEffect(() => {
     const timer = setInterval(() => {
       if (!inputVal && !simulating) {
@@ -57,40 +144,43 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
     return () => clearInterval(timer);
   }, [inputVal, simulating]);
 
-  // Execute simulation flow
+  // Execute simulation flow with personality awareness
   const runSimulation = (customPromptText?: string) => {
     const targetText = customPromptText || inputVal || PREDEFINED_SCENARIOS[activeChipIndex].prompt;
     const scenario = findMatchingScenario(targetText);
     
     setSimulating(true);
-    setSimulationStep(1);
     setActiveScenario(scenario);
-    setSelectedCandidate(scenario.candidates[0]);
 
-    // Build incremental simulation step logs
+    // Personality flavored log prefix
+    let personaPrefix = `[00:01] 🎯 [${currentPersonality.name}] Agent dispatched: "${targetText}"`;
+    if (personalityMode === 'executive') {
+      personaPrefix = `[00:01] 👔 [Executive Advisor] Discrete talent intelligence activated for: "${targetText}"`;
+    } else if (personalityMode === 'energetic') {
+      personaPrefix = `[00:01] ⚡ [Hyper-Growth Sourcer] Sprint fired across 45+ platforms for: "${targetText}"`;
+    }
+
     setSimulatedLogs([
-      `[00:01] ⚡ EZ Agent dispatch: "${targetText}"`,
-      `[00:02] Querying candidate graph across 45+ platforms and internal ATS...`
+      personaPrefix,
+      `[00:02] Querying candidate graph across 1B+ records and active ATS connections...`
     ]);
 
     const stepTimer1 = setTimeout(() => {
-      setSimulationStep(2);
       setSimulatedLogs((prev) => [
         ...prev,
         `[00:04] Identified ${scenario.candidatesFound.toLocaleString()} candidates matching ICP parameters`,
-        `[00:05] Running semantic evaluation & quota verification algorithms...`
+        `[00:05] Tone Mode: [${currentPersonality.tone}] applied to candidate evaluation rubric`
       ]);
-    }, 700);
+    }, 600);
 
     const stepTimer2 = setTimeout(() => {
-      setSimulationStep(3);
       setSimulatedLogs((prev) => [
         ...prev,
         `[00:07] Dispatched conversational voice screen & automated outreach sequences`,
         `[00:09] 3 shortlisted candidates approved for executive review (${scenario.candidates[0].name} scored ${scenario.candidates[0].matchScore}% match)`
       ]);
       setSimulating(false);
-    }, 1500);
+    }, 1400);
 
     return () => {
       clearTimeout(stepTimer1);
@@ -112,8 +202,16 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
 
   return (
     <div className="relative rounded-2xl bg-[#0D111D]/90 border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-md">
-      {/* Top Banner indicating Interactive Demo Mode */}
-      <div className="bg-gradient-to-r from-emerald-500/15 via-[#10B981]/10 to-cyan-500/10 border-b border-emerald-500/20 px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
+      {/* Dynamic Persona Toast Notification */}
+      {personalityToast && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-full bg-emerald-500/90 text-slate-950 font-bold text-xs shadow-xl flex items-center gap-2 animate-bounce">
+          <Sparkles className="w-4 h-4" />
+          <span>{personalityToast}</span>
+        </div>
+      )}
+
+      {/* Top Banner indicating Interactive Demo Mode & Personality Switcher */}
+      <div className="bg-gradient-to-r from-emerald-500/15 via-[#10B981]/10 to-cyan-500/10 border-b border-emerald-500/20 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 text-emerald-300 font-semibold">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -121,13 +219,38 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
           </span>
           <span>INTERACTIVE DEMO MODE</span>
           <span className="hidden sm:inline text-slate-400 font-normal">
-            — Type any recruitment prompt or select a chip below to simulate autonomous agent actions
+            — Type any role or press <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-emerald-300 font-mono text-[10px]">⌘K</kbd>
           </span>
         </div>
+
+        {/* Quick Personality & Shortcuts Bar */}
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono uppercase">
-            Live Simulator
-          </span>
+          {/* Agent Personality Selector Pill */}
+          <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-full px-2 py-0.5">
+            <span className="text-[10px] text-slate-400 font-mono uppercase hidden xs:inline">Persona:</span>
+            <button
+              onClick={() => {
+                const modes: AgentPersonalityMode[] = ['precision', 'executive', 'energetic'];
+                const next = modes[(modes.indexOf(personalityMode) + 1) % modes.length];
+                setPersonalityMode(next);
+              }}
+              title="Click or press 'P' to cycle agent persona"
+              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${currentPersonality.accentBadge}`}
+            >
+              <span>{currentPersonality.avatarIcon}</span>
+              <span>{currentPersonality.name}</span>
+            </button>
+          </div>
+
+          {/* Keyboard Shortcuts Trigger Button */}
+          <button
+            onClick={onOpenShortcuts}
+            title="View Keyboard Shortcuts (or press ?)"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer text-xs"
+          >
+            <Keyboard className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="font-mono text-[10px]">Shortcuts [?]</span>
+          </button>
         </div>
       </div>
 
@@ -143,6 +266,7 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
           <div className="flex items-center gap-3 flex-1 bg-[#090D16] border border-white/15 rounded-xl px-4 py-3 focus-within:border-emerald-500/60 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
             <Bot className="w-5 h-5 text-emerald-400 shrink-0" />
             <input
+              ref={inputRef}
               id="interactive-command-input"
               type="text"
               value={inputVal}
@@ -186,7 +310,7 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
           </div>
         </form>
 
-        {/* Rotating Interactive Prompt Chips */}
+        {/* Rotating Interactive Prompt Chips with Shortcut Keys Indicator */}
         <div className="mt-4 flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
@@ -201,6 +325,7 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
                 key={sc.id}
                 id={`scenario-chip-${sc.id}`}
                 onClick={() => handleChipClick(sc, idx)}
+                title={`Press shortcut key '${idx + 1}' to switch`}
                 className={`text-xs px-3.5 py-1.5 rounded-lg border transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
                   isSelected
                     ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-200 font-semibold shadow-[0_0_15px_rgba(16,185,129,0.25)]'
@@ -209,6 +334,9 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
                     : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.07]'
                 }`}
               >
+                <span className="font-mono text-[10px] text-slate-500 font-bold hidden sm:inline">
+                  [{idx + 1}]
+                </span>
                 <span>"{sc.chipLabel}"</span>
                 <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-black/40 text-slate-400">
                   {sc.category}
@@ -233,10 +361,10 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center gap-1 bg-[#151B2E] p-1 rounded-lg border border-white/10 text-xs">
+        <div className="flex items-center gap-1 bg-[#151B2E] p-1 rounded-lg border border-white/10 text-xs overflow-x-auto">
           <button
             onClick={() => setActiveTab('stream')}
-            className={`px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
               activeTab === 'stream'
                 ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                 : 'text-slate-400 hover:text-white'
@@ -246,7 +374,7 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('ats')}
-            className={`px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
               activeTab === 'ats'
                 ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                 : 'text-slate-400 hover:text-white'
@@ -256,13 +384,24 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('logs')}
-            className={`px-3 py-1 rounded-md font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
               activeTab === 'logs'
                 ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             Agent Logs ({activeScenario.actions.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('personality')}
+            className={`px-3 py-1 rounded-md font-medium transition-colors whitespace-nowrap flex items-center gap-1 ${
+              activeTab === 'personality'
+                ? 'bg-emerald-500 text-slate-950 font-bold shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>Agent Persona</span>
+            <span className="text-[10px] font-mono">[P]</span>
           </button>
         </div>
       </div>
@@ -272,13 +411,19 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
         {/* TAB 1: Live Candidate Stream */}
         {activeTab === 'stream' && (
           <div className="space-y-4">
-            {/* Scenario Summary Banner */}
+            {/* Scenario Summary Banner with Persona Header */}
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-start gap-2.5">
-                <Bot className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <p className="text-slate-200">
-                  <strong className="text-emerald-400">Agent Summary:</strong> {activeScenario.agentSummary}
-                </p>
+                <span className="text-base mt-0.5">{currentPersonality.avatarIcon}</span>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <strong className="text-emerald-400 font-semibold">{currentPersonality.name} Agent:</strong>
+                    <span className="text-[10px] text-slate-400 font-mono">({currentPersonality.tone})</span>
+                  </div>
+                  <p className="text-slate-200 text-xs">
+                    {activeScenario.agentSummary}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={onOpenContact}
@@ -473,6 +618,74 @@ export const CommandSimulator: React.FC<CommandSimulatorProps> = ({
               {simulatedLogs.map((log, i) => (
                 <div key={i} className="text-emerald-300/90">{log}</div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: Agent Personality Configuration Panel */}
+        {activeTab === 'personality' && (
+          <div className="p-5 rounded-xl bg-[#151B2E] border border-white/10 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-emerald-400" />
+                  Agent Personality & Communication Archetypes
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Customize the reasoning framework, voice modulation, and candidate screening tone.
+                </p>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">Press 'P' to cycle</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(Object.keys(AGENT_PERSONALITIES) as AgentPersonalityMode[]).map((mode) => {
+                const persona = AGENT_PERSONALITIES[mode];
+                const isActive = personalityMode === mode;
+
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setPersonalityMode(mode);
+                      setPersonalityToast(`Agent Persona changed to: ${persona.name}`);
+                      setTimeout(() => setPersonalityToast(null), 2500);
+                    }}
+                    className={`p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer space-y-2.5 relative ${
+                      isActive
+                        ? 'bg-emerald-500/15 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                        : 'bg-black/30 border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-[10px] uppercase tracking-wider">
+                        Active
+                      </span>
+                    )}
+                    <div className="text-2xl">{persona.avatarIcon}</div>
+                    <div>
+                      <div className="text-sm font-bold text-white">{persona.name}</div>
+                      <div className="text-[11px] text-emerald-400 font-medium">{persona.tagline}</div>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {persona.description}
+                    </p>
+                    <div className="pt-2 border-t border-white/5 text-[11px] text-slate-400">
+                      <span className="font-semibold text-slate-300">Tone:</span> {persona.tone}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5 text-xs text-slate-300">
+              <div className="font-semibold text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                Live Conversational Sample ({currentPersonality.name}):
+              </div>
+              <p className="italic text-emerald-300/90 text-xs pl-2 border-l-2 border-emerald-500/40">
+                "{currentPersonality.greeting}"
+              </p>
             </div>
           </div>
         )}

@@ -5,9 +5,10 @@ import { CommandSimulator } from './CommandSimulator';
 interface HeroSectionProps {
   onOpenContact: () => void;
   onOpenRegister: () => void;
+  onOpenShortcuts?: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenContact, onOpenRegister }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenContact, onOpenRegister, onOpenShortcuts }) => {
   return (
     <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-32 overflow-hidden">
       {/* Background glow effects complementing the ambient layer */}
@@ -78,6 +79,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenContact, onOpenR
           <CommandSimulator
             onOpenContact={onOpenContact}
             onOpenRegister={onOpenRegister}
+            onOpenShortcuts={onOpenShortcuts}
           />
         </div>
       </div>

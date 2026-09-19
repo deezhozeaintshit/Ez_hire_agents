@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import {
   Sparkles,
   ArrowRight,
@@ -43,7 +44,13 @@ export const SystemOfAction: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto mb-14"
+        >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4">
             <Zap className="w-3.5 h-3.5" />
             The System of Action
@@ -55,7 +62,7 @@ export const SystemOfAction: React.FC = () => {
           <p className="mt-5 text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
             See what hiring looks like now. Not a shorter day. A bigger one.
           </p>
-        </div>
+        </motion.div>
 
         {/* Stage Selector Tabs */}
         <div className="flex justify-center mb-10">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import {
   Search,
   Sparkles,
@@ -70,8 +71,14 @@ export const WorkflowSteps: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto mb-20"
+        >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
             <Layers className="w-3.5 h-3.5" />
             Autonomous Workflow Engine
           </div>
@@ -82,7 +89,7 @@ export const WorkflowSteps: React.FC = () => {
           <p className="mt-5 text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
             Every phase of talent acquisition, transformed from high-effort manual bottlenecks into autonomous execution directed by you.
           </p>
-        </div>
+        </motion.div>
 
         {/* 7 Workflow Cards */}
         <div className="space-y-20 lg:space-y-28">

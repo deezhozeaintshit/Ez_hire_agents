@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Quote, Star, Sparkles, Building2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { motion } from 'motion/react';
 import { Testimonial } from '../types';
 
 const TESTIMONIALS: Testimonial[] = [
@@ -60,18 +61,18 @@ const TESTIMONIALS: Testimonial[] = [
     company: 'Samsara',
     category: 'Tech',
     avatar: 'NS',
-    metric: '75% Faster',
-    metricLabel: 'average time-to-hire'
+    metric: '92% Acceptance',
+    metricLabel: 'on multi-panel interview invites'
   },
   {
     id: '6',
     quote:
-      "Reducing LinkedIn Recruiter spend is the play smart teams run to fund what's next. hireEZ provides an all-in-one system of action that delivers better results at lower cost.",
-    author: 'Jim Schnyder',
-    role: 'President & Strategic Advisor',
-    company: 'Recruiting Advisors',
+      "hireEZ's autonomous capability transforms recruiting from transactional search into proactive talent architecture. It is the most impactful AI workflow we have implemented.",
+    author: 'Elena Rodriguez',
+    role: 'VP of Global Talent Strategy',
+    company: 'FinTech Cloud Leaders',
     category: 'Advisors',
-    avatar: 'JS',
+    avatar: 'ER',
     metric: '50% Spend Saved',
     metricLabel: 'by replacing fragmented point tools'
   },
@@ -92,9 +93,15 @@ export const TestimonialsSection: React.FC = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 blur-[160px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4">
+        {/* Section Header with scroll animation */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-3xl mx-auto mb-14"
+        >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
             <Star className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
             Social Proof
           </div>
@@ -121,13 +128,17 @@ export const TestimonialsSection: React.FC = () => {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Testimonials Masonry Grid */}
+        {/* Testimonials Masonry Grid with Staggered Scroll Animations */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTestimonials.map((t) => (
-            <div
+          {filteredTestimonials.map((t, idx) => (
+            <motion.div
               key={t.id}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.5, delay: idx * 0.08 }}
               className="rounded-2xl bg-[#151B2E] border border-white/[0.08] p-6 hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col justify-between group"
             >
               <div className="space-y-4">
@@ -146,29 +157,28 @@ export const TestimonialsSection: React.FC = () => {
                   "{t.quote}"
                 </p>
 
-                {/* Metric Callout if present */}
+                {/* Quantitative Metric Highlight Banner */}
                 {t.metric && (
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5 flex items-baseline justify-between">
-                    <span className="text-emerald-400 font-extrabold text-sm">{t.metric}</span>
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-[#00DC82] text-sm">{t.metric}</span>
                     <span className="text-[11px] text-slate-400">{t.metricLabel}</span>
                   </div>
                 )}
               </div>
 
-              {/* Author Info */}
-              <div className="pt-6 mt-6 border-t border-white/5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-500/30 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-300 font-bold text-xs shrink-0">
+              {/* Author Footer */}
+              <div className="pt-6 mt-4 border-t border-white/5 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-400/20 via-teal-500/20 to-cyan-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-xs text-emerald-300 shrink-0">
                   {t.avatar}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
+                  <div className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">
                     {t.author}
-                  </h4>
-                  <p className="text-xs text-slate-400">{t.role}</p>
-                  <p className="text-[11px] font-semibold text-emerald-400">{t.company}</p>
+                  </div>
+                  <div className="text-xs text-slate-400">{t.role}</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

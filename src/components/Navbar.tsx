@@ -1,15 +1,48 @@
-import React, { useState } from 'react';
-import { ChevronDown, Sparkles, ArrowRight, Menu, X, Users, Search, Bot, Calendar, BarChart3, Building2, ShieldCheck, FileText, PlayCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  ChevronDown,
+  Sparkles,
+  ArrowRight,
+  Menu,
+  X,
+  Users,
+  Search,
+  Bot,
+  Calendar,
+  BarChart3,
+  Building2,
+  ShieldCheck,
+  FileText,
+  PlayCircle,
+  Keyboard,
+  ExternalLink,
+  Zap,
+  Sliders
+} from 'lucide-react';
 
 interface NavbarProps {
   onOpenContact: () => void;
   onOpenRegister: () => void;
+  onOpenShortcuts?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister, onOpenShortcuts }) => {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSubmenu, setMobileSubmenu] = useState<'platform' | 'solutions' | 'resources' | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 w-full transition-all">
@@ -48,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
       )}
 
       {/* Main Frosted Navigation */}
-      <nav className="backdrop-blur-xl bg-[#090D16]/85 border-b border-white/[0.07] transition-all">
+      <nav className="backdrop-blur-xl bg-[#090D16]/90 border-b border-white/[0.07] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5 group">
@@ -78,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
             >
               <button
                 id="nav-platform-btn"
-                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                   activeDropdown === 'platform' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white'
                 }`}
               >
@@ -143,7 +176,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
             >
               <button
                 id="nav-solutions-btn"
-                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                   activeDropdown === 'solutions' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white'
                 }`}
               >
@@ -181,6 +214,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
               Why hireEZ?
             </a>
 
+            {/* Analytics */}
+            <a
+              id="nav-analytics-btn"
+              href="#analytics-panel"
+              className="px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <span>Analytics</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            </a>
+
             {/* Resources Dropdown */}
             <div
               className="relative"
@@ -189,7 +232,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
             >
               <button
                 id="nav-resources-btn"
-                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                   activeDropdown === 'resources' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white'
                 }`}
               >
@@ -218,12 +261,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
             </div>
           </div>
 
-          {/* Right Action CTA Buttons */}
+          {/* Right Action CTA Buttons & Shortcuts button */}
           <div className="hidden sm:flex items-center gap-3">
+            {onOpenShortcuts && (
+              <button
+                onClick={onOpenShortcuts}
+                title="Keyboard Shortcuts [?]"
+                className="p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-white/5 transition-colors border border-transparent hover:border-emerald-500/20 cursor-pointer"
+                aria-label="Keyboard shortcuts"
+              >
+                <Keyboard className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               id="nav-signin-btn"
               onClick={onOpenContact}
-              className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
               Sign in
             </button>
@@ -237,63 +291,190 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenContact, onOpenRegister })
             </button>
           </div>
 
-          {/* Mobile hamburger */}
+          {/* Mobile hamburger & Action */}
           <div className="lg:hidden flex items-center gap-2">
             <button
               id="nav-mobile-contact-btn"
               onClick={onOpenContact}
-              className="px-3.5 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-bold text-xs"
+              className="px-3.5 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-bold text-xs shadow-md"
             >
               Contact
             </button>
             <button
               id="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5"
+              className="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 border border-white/10"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-emerald-400" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Panel */}
+        {/* Enhanced Mobile Drawer Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0D111D] border-b border-white/10 px-4 pt-2 pb-6 space-y-3">
-            <a
-              href="#system-of-action"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-base font-medium text-slate-200 border-b border-white/5"
-            >
-              Platform Overview
-            </a>
-            <a
-              href="#workflows"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-base font-medium text-slate-200 border-b border-white/5"
-            >
-              7-Step Agent Workflows
-            </a>
-            <a
-              href="#testimonials"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-base font-medium text-slate-200 border-b border-white/5"
-            >
-              Customer Testimonials
-            </a>
-            <div className="pt-3 flex flex-col gap-2.5">
-              <button
-                onClick={() => { setMobileMenuOpen(false); onOpenRegister(); }}
-                className="w-full py-2.5 rounded-xl border border-emerald-500/30 text-emerald-400 font-semibold text-sm text-center"
-              >
-                Register for Live Event
-              </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); onOpenContact(); }}
-                className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-sm text-center"
-              >
-                Contact sales
-              </button>
+          <div className="lg:hidden fixed inset-0 top-20 z-50 bg-[#090D16]/98 backdrop-blur-2xl border-t border-white/10 flex flex-col justify-between overflow-y-auto pb-12 animate-fade-in">
+            <div className="p-6 space-y-6">
+              {/* Search or Quick Jump */}
+              <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs text-slate-300">
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                  Autonomous AI Recruiting Platform
+                </span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
+                  2026 Edition
+                </span>
+              </div>
+
+              {/* Accordion / Nav Links */}
+              <div className="space-y-1">
+                {/* Platform Accordion */}
+                <div className="border-b border-white/5">
+                  <button
+                    onClick={() => setMobileSubmenu(mobileSubmenu === 'platform' ? null : 'platform')}
+                    className="w-full py-3.5 flex items-center justify-between text-base font-semibold text-white"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Bot className="w-5 h-5 text-emerald-400" />
+                      Platform Capabilities
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${mobileSubmenu === 'platform' ? 'rotate-180 text-emerald-400' : ''}`} />
+                  </button>
+
+                  {mobileSubmenu === 'platform' && (
+                    <div className="pl-7 pb-4 space-y-3 text-sm text-slate-300">
+                      <a
+                        href="#workflows"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1 text-slate-300 hover:text-emerald-400"
+                      >
+                        • Autonomous Sourcing
+                      </a>
+                      <a
+                        href="#workflows"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1 text-slate-300 hover:text-emerald-400"
+                      >
+                        • AI Conversational Screener
+                      </a>
+                      <a
+                        href="#workflows"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1 text-slate-300 hover:text-emerald-400"
+                      >
+                        • Panel Interview Scheduler
+                      </a>
+                      <a
+                        href="#workflows"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block py-1 text-slate-300 hover:text-emerald-400"
+                      >
+                        • Bi-directional ATS Sync
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Solutions Accordion */}
+                <div className="border-b border-white/5">
+                  <button
+                    onClick={() => setMobileSubmenu(mobileSubmenu === 'solutions' ? null : 'solutions')}
+                    className="w-full py-3.5 flex items-center justify-between text-base font-semibold text-white"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Building2 className="w-5 h-5 text-cyan-400" />
+                      Solutions by Industry
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${mobileSubmenu === 'solutions' ? 'rotate-180 text-emerald-400' : ''}`} />
+                  </button>
+
+                  {mobileSubmenu === 'solutions' && (
+                    <div className="pl-7 pb-4 space-y-3 text-sm text-slate-300">
+                      <div className="text-slate-300 hover:text-emerald-400 py-1" onClick={() => { setMobileMenuOpen(false); onOpenContact(); }}>
+                        • Enterprise & Global Teams
+                      </div>
+                      <div className="text-slate-300 hover:text-emerald-400 py-1" onClick={() => { setMobileMenuOpen(false); onOpenContact(); }}>
+                        • Staffing & Executive Search
+                      </div>
+                      <div className="text-slate-300 hover:text-emerald-400 py-1" onClick={() => { setMobileMenuOpen(false); onOpenContact(); }}>
+                        • Healthcare & Clinical Staffing
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick anchor links */}
+                <a
+                  href="#system-of-action"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3.5 text-base font-semibold text-white border-b border-white/5"
+                >
+                  The System of Action
+                </a>
+
+                <a
+                  href="#analytics-panel"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3.5 text-base font-semibold text-white border-b border-white/5 flex items-center justify-between"
+                >
+                  <span>Talent Analytics & Telemetry</span>
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">New</span>
+                </a>
+
+                <a
+                  href="#testimonials"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-3.5 text-base font-semibold text-white border-b border-white/5"
+                >
+                  Customer Stories & Metrics
+                </a>
+              </div>
+
+              {/* Mobile Quick Shortcuts & Persona Helper */}
+              {onOpenShortcuts && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenShortcuts();
+                  }}
+                  className="w-full p-3.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-between text-xs text-slate-300"
+                >
+                  <span className="flex items-center gap-2 text-white font-medium">
+                    <Keyboard className="w-4 h-4 text-emerald-400" />
+                    View Keyboard Shortcuts Guide
+                  </span>
+                  <span className="text-emerald-400 font-mono">[?]</span>
+                </button>
+              )}
+
+              {/* Call to Actions in Mobile Drawer */}
+              <div className="pt-4 space-y-3">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenContact();
+                  }}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-[#00DC82] text-slate-950 font-extrabold text-base flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(16,185,129,0.4)]"
+                >
+                  <span>Contact sales</span>
+                  <ArrowRight className="w-5 h-5 text-slate-950" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenRegister();
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-white font-semibold text-sm border border-white/15 text-center"
+                >
+                  Try for free / Webinar
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Footer Info in Mobile Drawer */}
+            <div className="px-6 pt-4 text-center border-t border-white/5 text-xs text-slate-500">
+              © 2026 hireEZ, Inc. • Enterprise Agentic AI Recruiting
             </div>
           </div>
         )}
